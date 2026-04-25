@@ -1,6 +1,7 @@
-import numpy as np
+import numpy as np                                  #To manipulate multi-dimensionality tab
+
 import pickle
-import os
+import os                                           #To acess the files
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
