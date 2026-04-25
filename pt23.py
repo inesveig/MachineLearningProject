@@ -16,12 +16,12 @@ img_array = np.array(img)/255
 print("a")
 
 #Filters
-K1 = (1/9) * np.ones((3,3))
-K2 = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-K3 = np.array([[-1, 2, -1], [-1, 2, -1], [-1, 2, -1]])
-K4 = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]])
-K5 = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-K6 = np.array([[-2, -1, 0], [-1, 1, 1], [0, 1, 2]])
+K1 = (1/9) * np.ones((3,3))                                 #should be blur but also almost identical to the og
+K2 = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])        #Should be a little bit neater
+K3 = np.array([[-1, 2, -1], [-1, 2, -1], [-1, 2, -1]])      #Really dark because K3 looks at the horizontal variations
+K4 = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]])         #idk
+K5 = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])         #idk
+K6 = np.array([[-2, -1, 0], [-1, 1, 1], [0, 1, 2]])         #idk
 
 print("b")
 
@@ -38,7 +38,15 @@ print("c")
 #To apply filters
 for ax, (name, K) in zip(axes.flat[1:], filters.items()):
     filtered = convolve(img_array, K)
+    if name == "K1" or name == "K2":
+        filtered = np.clip(filtered, 0, 1)
+    
+    else:
+        filtered = np.abs(filtered)
+        filtered = filtered/filtered.max()
+
     ax.imshow(filtered, cmap = "gray")
+
 print("d")
 
 
