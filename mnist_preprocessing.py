@@ -27,6 +27,7 @@ import numpy as np
 from PIL import Image                # Pillow  –  pip install pillow
 from sklearn.model_selection import train_test_split   # pip install scikit-learn
 
+
 # ── Constants ────────────────────────────────────────────────────────────────
 
 TILE_SIZE   = 28          # each individual digit image is 28 × 28 pixels
@@ -96,14 +97,31 @@ def slice_sprite_sheet(sheet: Image.Image, digit: int) -> tuple[np.ndarray, np.n
     actual_h, actual_w = sheet_arr.shape
 
     # Recompute grid dimensions from the actual image size
-    cols = actual_w // TILE_SIZE  # integer division — ignores any remainder
-    rows = actual_h // TILE_SIZE
+    cols = 40 # actual_w // TILE_SIZE  # integer division — ignores any remainder
+    rows = 25 # actual_h // TILE_SIZE
 
     patches = []
+
+    # through manual checking we note that there are EXACTLY 358 pixels between every 10 images horizontally
+    # matter of fact there's also 309 pixels between every 10 images vertically
+    # and since this isn't a multiple of 10 we need to work around this
+    ver_total_offset = 197 # hard coded offset values because the number grid on the Github images don't start at the
+    hor_total_offset = 304 # very top-left corner so (0,0) is an incorrect starting point and messes this up
+
     for row in range(rows):
+        sec = 0 # also known as the Seven/Eight (horizontal) Counter which resets at the end of each line
         for col in range(cols):
-            y0, y1 = row * TILE_SIZE, (row + 1) * TILE_SIZE
-            x0, x1 = col * TILE_SIZE, (col + 1) * TILE_SIZE
+            x0 = hor_total_offset + sec + col * TILE_SIZE
+            x1 = hor_total_offset + sec + (col + 1) * TILE_SIZE
+
+            if col % 5 == 2: # there's a 7/8 pixel gap between images horizontally
+                sec += 7
+            else:
+                sec += 8
+
+            y0 = ver_total_offset + 3 * row + row * TILE_SIZE # + 3*row because there's a 3px gap vertically
+            y1 = ver_total_offset + 3 * row + (row + 1) * TILE_SIZE
+
             tile = sheet_arr[y0:y1, x0:x1]  # guaranteed (28, 28)
             patches.append(tile.flatten())
 
