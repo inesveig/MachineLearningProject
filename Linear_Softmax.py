@@ -9,7 +9,7 @@ class LinearXSoftmax:
     def softmax(self, z):
         # on transforme les scores en proba
         # on soustrait le max de chaque ligne
-        exp_z = np.exp(z - np.max(z, axis=1, keepdims=True))
+        exp_z = np.exp(z) # - np.max(z, axis=1, keepdims=True))
         return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
     def forward(self, X):
@@ -20,17 +20,28 @@ class LinearXSoftmax:
         self.probs = self.softmax(self.z)
         return self.probs
 
-    def compute_loss(self, y_true, probs):  # pour cross entropy
-        m = y_true.shape[0]  # nb d'image
-        loss = -1 / m * np.sum(y_true * np.log(probs + 1e-8))  # ajouter un 1e-8 pour éviter une erreur avec un Log
+
+    def prediction(self, X): # find index du maximum (= chiffre prédit)
+        return np.argmax(self.forward(X), axis=1)
+
+    def compute_loss(self, true_labels, predicted_labels):  # pour cross entropy
+        # true_labels = vector of n rows
+        n = true_labels.shape[0]
+        # récupérer la proba de la bonne classe pour chaque exemple
+        correct_logprobs = np.log(predicted_labels[np.arange(n), true_labels])
+        loss = (-1/n) * np.sum(correct_logprobs)
         return loss
 
+    def gradient_descent(self):
+        print("coming soon")
 
+"""
 # Mon exemple de test
 model = LinearXSoftmax(input_size=784, num_classes=10)
-X_test = np.random.rand(1, 784)  # on simule une image
-predictions = model.forward(X_test)  # on test
+#X_test = np.random.rand(1, 784)  # on simule une image
+predictions = model.forward(X_test[0])  # on test
 
 print("Proba pour chaque chiffre (0 à 9) :")
 print(predictions)
 print(f"Somme des proba : {np.sum(predictions)}")  # Doit être environ égal à 1.0 si tt est ok
+"""

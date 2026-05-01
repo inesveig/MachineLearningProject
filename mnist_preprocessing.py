@@ -27,6 +27,8 @@ import numpy as np
 from PIL import Image                # Pillow  –  pip install pillow
 from sklearn.model_selection import train_test_split   # pip install scikit-learn
 
+import matplotlib.pyplot as plt
+from Linear_Softmax import *
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -129,7 +131,6 @@ def slice_sprite_sheet(sheet: Image.Image, digit: int) -> tuple[np.ndarray, np.n
     X_class /= 255.0
 
     y_class = np.full(len(patches), fill_value=digit, dtype=np.int32)
-
     return X_class, y_class
 
 
@@ -187,6 +188,18 @@ if __name__ == "__main__":
     print("\n[1/3] Downloading sprite sheets …")
     X_train, X_test, y_train, y_test = load_mnist()
 
+    plt.figure(figsize=(10, 3))
+    for i in range(4):
+        X = X_train[i].reshape(28, 28)
+        y = y_train[i]
+        plt.subplot(1, 4, i + 1)
+        plt.imshow(X, cmap="gray")
+        plt.title(f"Label: {y}")
+        plt.axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
     print("\n[2/3] Dataset summary")
     print(f"  Total images     : {len(y_train) + len(y_test):>6}")
     print(f"  Training set     : {len(y_train):>6}  images  –  X_train shape: {X_train.shape}")
@@ -201,3 +214,34 @@ if __name__ == "__main__":
         print(f"  Digit {digit}: {count} images")
 
     print("\nAll done.  X_train, X_test, y_train, y_test are ready.")
+    # Mon exemple de test
+    model = LinearXSoftmax(input_size=784, num_classes=10)
+    # X_test = np.random.rand(1, 784)  # on simule une image
+
+    X = X_train  #shape (8000, 784)
+    y = y_train  #shape (8000,)
+    predictions = model.forward(X_train) #shape (8000, 10) -> proba de chaque nombre pour chaque image
+    pred_vec = model.prediction(X) #shape(8000,)
+    error = model.compute_loss(y, predictions)
+
+
+    plt.figure(figsize=(10, 3))
+    for i in range(4):
+        print("\nProba pour chaque chiffre (0 à 9) :")
+        print(predictions[i])
+        #print(f"Somme des proba : {np.sum(predictions)}")  # Doit être environ égal à 1.0 si tt est ok
+        X_disp = X[i].reshape(28, 28)
+        y_disp = y[i]
+        plt.subplot(1, 4, i + 1)
+        plt.imshow(X_disp, cmap="gray")
+        plt.title(f"Prediction:{pred_vec[i]} Label: {y_disp}")
+        plt.axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
+
+
+
+
+
