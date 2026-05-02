@@ -28,7 +28,7 @@ from PIL import Image                # Pillow  –  pip install pillow
 from sklearn.model_selection import train_test_split   # pip install scikit-learn
 
 import matplotlib.pyplot as plt
-from Linear_Softmax import *
+from Part1 import LinearXSoftmax, apply_pca, evaluate_model
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -239,6 +239,21 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
+
+
+
+
+
+    X_train_pca, X_test_pca, pca = apply_pca(X_train, X_test, n_components=50)
+
+    model = LinearXSoftmax(input_size=X_train_pca.shape[1], num_classes=10)
+    model.train(X_train_pca, y_train, learning_rate=0.1, epochs=100)
+
+    train_accuracy, train_error_rate, _ = evaluate_model(model, X_train_pca, y_train)
+    test_accuracy, test_error_rate, _ = evaluate_model(model, X_test_pca, y_test)
+
+    print(f"Training error rate: {train_error_rate:.2f}%")
+    print(f"Test error rate: {test_error_rate:.2f}%")
 
 
 

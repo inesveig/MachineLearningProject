@@ -1,5 +1,5 @@
 import numpy as np
-
+from sklearn.decomposition import PCA
 
 class LinearXSoftmax:
     def __init__(self, input_size, num_classes): #voir avec le travail des autres
@@ -73,3 +73,24 @@ class LinearXSoftmax:
 
             if epoch % 10 == 0:
                 print(f"Epoch {epoch}, Loss: {loss:.4f}")
+
+
+
+def compute_accuracy(y_true, y_pred):
+    return np.mean(y_true == y_pred) * 100
+
+def compute_error_rate(y_true, y_pred):
+    return 100 - compute_accuracy(y_true, y_pred)
+
+def evaluate_model(model, X, y):
+    y_pred = model.prediction(X)
+    accuracy = compute_accuracy(y, y_pred)
+    error_rate = compute_error_rate(y, y_pred)
+    return accuracy, error_rate, y_pred
+
+def apply_pca(X_train, X_test, n_components=50):
+    pca = PCA(n_components=n_components)
+    X_train_pca = pca.fit_transform(X_train)
+    X_test_pca = pca.transform(X_test)
+    return X_train_pca, X_test_pca, pca
+
