@@ -29,6 +29,7 @@ from sklearn.model_selection import train_test_split   # pip install scikit-lear
 
 import matplotlib.pyplot as plt
 from Part1 import LinearXSoftmax, apply_pca, evaluate_model
+from sklearn.decomposition import PCA
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -246,13 +247,58 @@ if __name__ == "__main__":
 
     X_train_pca, X_test_pca, pca = apply_pca(X_train, X_test, n_components=50)
 
+    print("\nPCA output:")
+    print(f"X_train_pca shape: {X_train_pca.shape}")
+    print(f"X_test_pca shape: {X_test_pca.shape}")
+
+    print("\nPCA du train:")
+    print(X_train_pca[0])
+
+    print("\nPCA du test:")
+    print(X_test_pca[0])
+
+    pca_vis = PCA(n_components=2)
+    X_train_pca_2d = pca_vis.fit_transform(X_train)
+    X_test_pca_2d = pca_vis.transform(X_test)
+
+
+    plt.figure(figsize=(8, 6))
+    scatter = plt.scatter(
+        X_train_pca_2d[:, 0],
+        X_train_pca_2d[:, 1],
+        c=y_train,
+        cmap="tab10",
+        s=10
+    )
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+    plt.title("PCA du training set")
+    plt.colorbar(scatter, label="Classe")
+    plt.show()
+
+
+    plt.figure(figsize=(8, 6))
+    scatter = plt.scatter(
+        X_test_pca_2d[:, 0],
+        X_test_pca_2d[:, 1],
+        c=y_test,
+        cmap="tab10",
+        s=10
+    )
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+    plt.title("PCA du test set")
+    plt.colorbar(scatter, label="Classe")
+    plt.show()
+
+
     model = LinearXSoftmax(input_size=X_train_pca.shape[1], num_classes=10)
     model.train(X_train_pca, y_train, learning_rate=0.1, epochs=100)
 
     train_accuracy, train_error_rate, _ = evaluate_model(model, X_train_pca, y_train)
     test_accuracy, test_error_rate, _ = evaluate_model(model, X_test_pca, y_test)
 
-    print(f"Training error rate: {train_error_rate:.2f}%")
+    print(f"\nTraining error rate: {train_error_rate:.2f}%")
     print(f"Test error rate: {test_error_rate:.2f}%")
 
 
