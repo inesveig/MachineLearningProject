@@ -13,7 +13,6 @@ from sklearn.model_selection import train_test_split
 
 import matplotlib.pyplot as plt
 from Part1 import LinearXSoftmax, MultiLayerPerceptron, apply_pca, evaluate_model
-from part1hiddenlayers import MLP
 from sklearn.decomposition import PCA
 
 # ── Constants ────────────────────────────────────────────────────────────────
