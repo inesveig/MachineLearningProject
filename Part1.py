@@ -183,7 +183,7 @@ class MultiLayerPerceptron:
 
         return da1, db1, da2, db2, da3, db3
 
-    def train(self, X, y, learning_rate=0.01, epochs=100, batch_size=16):
+    def train(self, X, y, learning_rate=0.01, epochs=100, batch_size=8):
         # training with mini-batch descent
         """
         Why mini-batches instead of the full dataset?
