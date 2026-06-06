@@ -2,51 +2,30 @@
 MNIST Data Loading & Preprocessing  –  Section 1.1
 ===================================================
 Source: https://github.com/mbornet-hl/MNIST/tree/master/IMAGES/GROUPS
-
-Each PNG in that repo is a *sprite sheet*: a mosaic of 1 000 handwritten
-digit images (28 × 28 px) arranged in a 25-column × 40-row grid.
-There is one sprite sheet per digit class (0–9), so 10 files in total.
-
-Pipeline
---------
-1. Download the 10 sprite sheets from GitHub (raw URLs).
-2. Slice each sheet into 1 000 individual 28 × 28 patches.
-3. Convert each patch to grayscale if needed and flatten it to ℝ^784.
-4. Normalise pixel intensities from [0, 255] → [0, 1].
-5. Stack everything into:
-       X  –  NumPy array of shape  (10 000, 784),  dtype float32
-       y  –  NumPy array of shape  (10 000,),       dtype int32
-6. Shuffle the full dataset (reproducible, seeded).
-7. Split into a training set (80 %) and a test set (20 %).
 """
 
 import io
 import urllib.request
 
 import numpy as np
-from PIL import Image                # Pillow  –  pip install pillow
-from sklearn.model_selection import train_test_split   # pip install scikit-learn
+from PIL import Image
+from sklearn.model_selection import train_test_split
 
 import matplotlib.pyplot as plt
-from Part1 import LinearXSoftmax, apply_pca, evaluate_model
+from Part1 import LinearXSoftmax, MultiLayerPerceptron, apply_pca, evaluate_model
+from part1hiddenlayers import MLP
 from sklearn.decomposition import PCA
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-TILE_SIZE   = 28          # each individual digit image is 28 × 28 pixels
-GRID_COLS   = 25          # sprite-sheet layout: 25 columns …
-GRID_ROWS   = 40          # … and 40 rows  →  25 × 40 = 1 000 images per sheet
-N_PER_CLASS = GRID_COLS * GRID_ROWS   # 1 000
+TILE_SIZE = 28
+GRID_COLS = 25
+GRID_ROWS = 40
+N_PER_CLASS = GRID_COLS * GRID_ROWS
 
 # The raw-file URL template.  GitHub serves raw PNGs at this base path.
-RAW_BASE = (
-    "https://raw.githubusercontent.com/mbornet-hl/MNIST/master/IMAGES/GROUPS/"
-)
+RAW_BASE = ("https://raw.githubusercontent.com/mbornet-hl/MNIST/master/IMAGES/GROUPS/")
 
-# Exact filenames as they appear in the repository (one per digit 0–9).
-# Pattern:  mnist_v5_MNIST-{digit}_{start:05d}-{end:05d}_25x40.png
-# The numeric range in the name reflects the original MNIST sample indices
-# for that class; we only need the digit embedded after "MNIST-".
 FILENAMES = [
     "mnist_v5_MNIST-0_00001-01000_25x40.png",
     "mnist_v5_MNIST-1_01001-02000_25x40.png",
@@ -60,47 +39,22 @@ FILENAMES = [
     "mnist_v5_MNIST-9_00001-01000_25x40.png",
 ]
 
-TEST_SIZE   = 0.20    # 20 % of total data reserved for testing
+TEST_SIZE = 0.20    # 20 % of total data reserved for testing
 RANDOM_SEED = 42      # fixed seed → reproducible split across runs
 
 
-# ── Helper functions ──────────────────────────────────────────────────────────
-
 def fetch_image(url: str) -> Image.Image:
-    """Download a PNG from *url* and return a Pillow Image object."""
     with urllib.request.urlopen(url) as response:
         raw_bytes = response.read()
     return Image.open(io.BytesIO(raw_bytes))
 
 
 def slice_sprite_sheet(sheet: Image.Image, digit: int) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Cut a sprite sheet into individual 28 × 28 tiles.
-
-    Parameters
-    ----------
-    sheet : PIL Image
-        The full mosaic image (700 × 1120 px for a 25 × 40 grid of 28 × 28 tiles).
-    digit : int
-        The class label (0–9) for every tile in this sheet.
-
-    Returns
-    -------
-    X_class : float32 array of shape (1 000, 784)
-        Flattened, normalised pixel vectors.
-    y_class : int32 array of shape (1 000,)
-        Label repeated 1 000 times.
-    """
-    # Convert to grayscale (mode 'L') in case the PNG has an RGB or RGBA mode.
-    # Grayscale is what the mathematical model expects: one intensity per pixel.
 
     sheet_gray = sheet.convert("L")
     sheet_arr = np.array(sheet_gray, dtype=np.float32)
 
-    actual_h, actual_w = sheet_arr.shape
-
-    # Recompute grid dimensions from the actual image size
-    cols = 40 # actual_w // TILE_SIZE  # integer division — ignores any remainder
+    cols = 40 # actual_w // TILE_SIZE
     rows = 25 # actual_h // TILE_SIZE
 
     patches = []
@@ -135,22 +89,8 @@ def slice_sprite_sheet(sheet: Image.Image, digit: int) -> tuple[np.ndarray, np.n
     return X_class, y_class
 
 
-# ── Main loading function ─────────────────────────────────────────────────────
-
 def load_mnist() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Download, preprocess, and split the MNIST sprite-sheet dataset.
 
-    Returns
-    -------
-    X_train : float32 array, shape (8 000, 784)
-    X_test  : float32 array, shape (2 000, 784)
-    y_train : int32   array, shape (8 000,)
-    y_test  : int32   array, shape (2 000,)
-
-    Each row of X_* is a vector x_i ∈ [0,1]^784 representing one image.
-    Each element of y_* is the corresponding digit label in {0, …, 9}.
-    """
     all_X, all_y = [], []
 
     for digit, filename in enumerate(FILENAMES):
@@ -159,16 +99,15 @@ def load_mnist() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
 
         sheet = fetch_image(url)
         X_class, y_class = slice_sprite_sheet(sheet, digit)
-
         all_X.append(X_class)
         all_y.append(y_class)
         print(f"done  ({X_class.shape[0]} images)")
 
-    # Stack all classes into one dataset
+    # we stack all classes into one dataset
     X = np.vstack(all_X)   # (10 000, 784)
     y = np.concatenate(all_y)       # (10 000,)
 
-    # Shuffle and split
+    # we shuffle and split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y,
         test_size=TEST_SIZE,
@@ -179,8 +118,7 @@ def load_mnist() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     return X_train, X_test, y_train, y_test
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
-
+# MAIN
 if __name__ == "__main__":
     print("=" * 60)
     print("MNIST  –  Data loading & preprocessing")
@@ -216,14 +154,14 @@ if __name__ == "__main__":
 
     print("\nAll done.  X_train, X_test, y_train, y_test are ready.")
     # Mon exemple de test
-    model = LinearXSoftmax(input_size=784, num_classes=10)
+    model2 = MLP(input_size=784, num_classes=10)
     # X_test = np.random.rand(1, 784)  # on simule une image
 
     X = X_train  #shape (8000, 784)
     y = y_train  #shape (8000,)
-    predictions = model.forward(X_train) #shape (8000, 10) -> proba de chaque nombre pour chaque image
-    pred_vec = model.prediction(X) #shape(8000,)
-    error = model.compute_loss(y, predictions)
+    predictions = model2.forward(X_train) #shape (8000, 10) -> proba de chaque nombre pour chaque image
+    pred_vec = model2.prediction(X) #shape(8000,)
+    error = model2.compute_loss(y, predictions)
 
 
     plt.figure(figsize=(10, 3))
@@ -240,9 +178,6 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.show()
-
-
-
 
 
     X_train_pca, X_test_pca, pca = apply_pca(X_train, X_test, n_components=50)
@@ -292,11 +227,11 @@ if __name__ == "__main__":
     plt.show()
 
 
-    model = LinearXSoftmax(input_size=X_train_pca.shape[1], num_classes=10)
-    model.train(X_train_pca, y_train, learning_rate=0.1, epochs=100)
+    model2 = MLP(input_size=X_train_pca.shape[1], num_classes=10)
+    model2.train(X_train_pca, y_train, learning_rate=0.1, epochs=100)
 
-    train_accuracy, train_error_rate, _ = evaluate_model(model, X_train_pca, y_train)
-    test_accuracy, test_error_rate, _ = evaluate_model(model, X_test_pca, y_test)
+    train_accuracy, train_error_rate, _ = evaluate_model(model2, X_train_pca, y_train)
+    test_accuracy, test_error_rate, _ = evaluate_model(model2, X_test_pca, y_test)
 
     print(f"\nTraining error rate: {train_error_rate:.2f}%")
     print(f"Test error rate: {test_error_rate:.2f}%")
