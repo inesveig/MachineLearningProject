@@ -15,8 +15,6 @@ import matplotlib.pyplot as plt
 from Part1 import LinearXSoftmax, MultiLayerPerceptron, apply_pca, evaluate_model
 from sklearn.decomposition import PCA
 
-# ── Constants ────────────────────────────────────────────────────────────────
-
 TILE_SIZE = 28
 GRID_COLS = 25
 GRID_ROWS = 40
