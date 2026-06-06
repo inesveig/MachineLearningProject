@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
     print("\nAll done.  X_train, X_test, y_train, y_test are ready.")
     # Mon exemple de test
-    model2 = MLP(input_size=784, num_classes=10)
+    model2 = MultiLayerPerceptron(input_size=784, num_classes=10)
     # X_test = np.random.rand(1, 784)  # on simule une image
 
     X = X_train  #shape (8000, 784)
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     plt.show()
 
 
-    model2 = MLP(input_size=X_train_pca.shape[1], num_classes=10)
+    model2 = MultiLayerPerceptron(input_size=X_train_pca.shape[1], num_classes=10)
     model2.train(X_train_pca, y_train, learning_rate=0.1, epochs=100)
 
     train_accuracy, train_error_rate, _ = evaluate_model(model2, X_train_pca, y_train)
