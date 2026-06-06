@@ -186,11 +186,6 @@ class MultiLayerPerceptron:
     def train(self, X, y, learning_rate=0.01, epochs=100, batch_size=16):
         # training with mini-batch descent
         """
-        Each epoch:
-            1. Shuffle the data so the model doesn't learn ordering patterns.
-            2. Split into mini-batches of size batch_size.
-            3. For each batch: forward pass → compute loss → backprop → update.
-
         Why mini-batches instead of the full dataset?
             With ~235k parameters, computing gradients over all 8000 samples
             every step is slow
